@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Constancia y Frecuencia</title>
+
+    <!-- Google Fonts - Oswald y Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS y Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Librería de Gráficos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.min.css">
+
+    <style>
+        :root {
+            --font-family-headings: 'Oswald', sans-serif;
+            --font-family-body: 'Roboto', sans-serif;
+            --primary-bg: #f4f7fc;
+            --card-bg: #ffffff;
+            --text-primary: #2a3547;
+            --text-secondary: #6c757d;
+            --accent-color: #0d6efd;
+            --red: #dc3545;
+            --border-radius: 0.75rem;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+        }
+        body {
+            font-family: var(--font-family-body);
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+        }
+        h1, h2, h3, h4, h5, .display-1, .kpi-value, .btn {
+            font-family: var(--font-family-headings);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .dashboard-card {
+            background-color: var(--card-bg);
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+        }
+        .hero-widget { color: white; text-align: center; }
+        .hero-widget.status-danger { background: linear-gradient(135deg, #dc3545, #a71d2a); }
+        .hero-widget .display-1 { font-weight: 700; }
+        .hero-widget .motivational-text { font-family: var(--font-family-body); text-transform: none; font-size: 1.2rem; opacity: 0.9; letter-spacing: 0; }
+        .sidebar .kpi-card .card-body { display: flex; align-items: center; }
+        .sidebar .kpi-card .kpi-icon { font-size: 1.8rem; padding: 0.7rem; border-radius: 50%; margin-right: 0.75rem; }
+        .sidebar .kpi-card .kpi-value { font-weight: 600; font-size: 1.3rem; }
+        .sidebar .kpi-card .kpi-label { color: var(--text-secondary); font-size: 0.8rem; font-family: var(--font-family-body); text-transform: none; letter-spacing: 0;}
+        .history-list { max-height: 400px; overflow-y: auto; }
+        .history-list .list-group-item:hover { transform: translateX(3px); background-color: #f8f9fa; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="container-fluid">
+        <header class="d-flex align-items-center mb-4">
+            <i class="bi bi-graph-up-arrow fs-2 me-3 text-primary"></i>
+            <h1 class="h2 mb-0">Dashboard de Constancia</h1>
+        </header>
+
+        <div class="row">
+            <!-- Columna Principal de Análisis -->
+            <div class="col-lg-8">
+                <!-- Hero Widget -->
+                <div id="hero-widget" class="dashboard-card hero-widget p-4">
+                     <div class="row align-items-center">
+                        <div class="col-md-4"><p class="mb-1" style="font-family: var(--font-family-headings); text-transform: uppercase;">Días sin entrenar</p><div id="hero-days" class="display-1">--</div></div>
+                        <div class="col-md-8"><p id="hero-motivation" class="motivational-text fst-italic">Calculando...</p></div>
+                        <!-- El botón de registrar ha sido eliminado -->
+                    </div>
+                </div>
+
+                <!-- Gráfico de Línea de Tiempo -->
+                <div class="dashboard-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Línea de Tiempo de Actividad</h5>
+                        <p class="card-subtitle mb-3 text-muted">Visualización cronológica de tus entrenamientos.</p>
+                        <div id="timeline-chart-apex"></div>
+                    </div>
+                </div>
+
+                <!-- Historial Detallado -->
+                 <div class="dashboard-card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Historial Detallado</h5>
+                        <ul id="training-history-list" class="list-group list-group-flush history-list"></ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Barra Lateral de Resúmenes -->
+            <div class="col-lg-4 sidebar">
+                <!-- KPIs -->
+                <div class="dashboard-card kpi-card"> <div class="card-body"><i class="bi bi-reception-4 kpi-icon bg-primary-subtle text-primary"></i><div><div id="kpi-total" class="kpi-value">--</div><div class="kpi-label">Entrenamientos Totales</div></div></div> </div>
+                <div class="dashboard-card kpi-card"> <div class="card-body"><i class="bi bi-hourglass-split kpi-icon bg-info-subtle text-info"></i><div><div id="kpi-avg-pause" class="kpi-value">--</div><div class="kpi-label">Pausa Promedio</div></div></div> </div>
+                <div class="dashboard-card kpi-card"> <div class="card-body"><i class="bi bi-graph-down-arrow kpi-icon bg-success-subtle text-success"></i><div><div id="kpi-min-pause" class="kpi-value">--</div><div class="kpi-label">Pausa Mínima</div></div></div> </div>
+                <div class="dashboard-card kpi-card"> <div class="card-body"><i class="bi bi-graph-up-arrow kpi-icon bg-danger-subtle text-danger"></i><div><div id="kpi-max-pause" class="kpi-value">--</div><div class="kpi-label">Pausa Máxima</div></div></div> </div>
+                <div class="dashboard-card kpi-card"> <div class="card-body"><i class="bi bi-fire kpi-icon bg-warning-subtle text-warning"></i><div><div id="kpi-streak" class="kpi-value">--</div><div class="kpi-label">Mejor Racha</div></div></div> </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Librerías JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        const trainingData = [
+            { "date": "2025-05-14T18:00:00" }, { "date": "2024-10-17T17:00:00" },
+            { "date": "2024-08-05T17:00:00" }, { "date": "2024-07-01T17:00:00" },
+            { "date": "2024-04-03T17:00:00" }, { "date": "2024-02-23T17:00:00" },
+            { "date": "2024-01-31T17:00:00" }, { "date": "2023-12-03T12:00:00" },
+            { "date": "2023-11-09T08:00:00" }, { "date": "2023-08-23T09:00:00" }
+        ];
+
+        function getDifferenceInDays(d1, d2) { const msInDay = 1000 * 60 * 60 * 24; return Math.floor((new Date(d2) - new Date(d1)) / msInDay); }
+        function formatTimeDifference(days) { if (days < 0) days = 0; if (days < 1) return "Mismo día"; const y = Math.floor(days / 365), m = Math.floor((days % 365) / 30.44), r = Math.floor(days - (y * 365) - (m * 30.44)); const p = []; if (y > 0) p.push(`${y} ${y > 1 ? 'años' : 'año'}`); if (m > 0) p.push(`${m} ${m > 1 ? 'meses' : 'mes'}`); if (r > 0) p.push(`${r} ${r > 1 ? 'días' : 'día'}`); return p.join(', '); }
+        function formatTimeAgo(days) { if (days < 1) return "Hoy"; if (days === 1) return "Ayer"; return `Hace ${formatTimeDifference(days)}`; }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const sortedTrainings = trainingData.map(t => new Date(t.date)).sort((a, b) => b - a);
+            const now = new Date();
+            if (sortedTrainings.length === 0) return;
+
+            // --- Cálculos de KPIs (se mantiene igual) ---
+            let totalPauseDays = 0, bestStreak = 0, currentStreak = 0; let minPause = Infinity, maxPause = 0;
+            for (let i = 0; i < sortedTrainings.length - 1; i++) {
+                const pause = getDifferenceInDays(sortedTrainings[i + 1], sortedTrainings[i]);
+                totalPauseDays += pause; if (pause < minPause) minPause = pause; if (pause > maxPause) maxPause = pause;
+                if (pause <= 3) { currentStreak++; } else { if (currentStreak > bestStreak) bestStreak = currentStreak; currentStreak = 0; }
+            }
+            if (currentStreak > bestStreak) bestStreak = currentStreak;
+            if (minPause === Infinity) minPause = 0;
+            
+            // --- Renderizado de KPIs y Widget Principal ---
+            const daysSinceLast = getDifferenceInDays(sortedTrainings[0], now);
+            let motivationalMessage = '¡El primer paso es registrar tu actividad!';
+            if (daysSinceLast <= 1) { motivationalMessage = '¡Excelente! La disciplina de hoy es el éxito de mañana.'; }
+            else if (daysSinceLast <= 3) { motivationalMessage = '¡Sigue así! Estás construyendo un hábito imparable.'; }
+            else if (daysSinceLast <= 7) { motivationalMessage = 'No dejes que una pequeña pausa se convierta en un gran alto. ¡Es hora de volver!'; }
+            else if (daysSinceLast > 30) { motivationalMessage = 'El mejor momento para empezar de nuevo es ahora. ¡No te rindas!'; }
+            else { motivationalMessage = 'Recuerda tu objetivo. Un pequeño esfuerzo te acerca a él.';}
+            document.getElementById('hero-motivation').textContent = motivationalMessage;
+            
+            const avgPause = sortedTrainings.length > 1 ? (totalPauseDays / (sortedTrainings.length - 1)).toFixed(1) : 0;
+            document.getElementById('kpi-total').textContent = sortedTrainings.length;
+            document.getElementById('kpi-avg-pause').textContent = `${avgPause} días`;
+            document.getElementById('kpi-min-pause').textContent = `${minPause} días`;
+            document.getElementById('kpi-max-pause').textContent = `${maxPause} días`;
+            document.getElementById('kpi-streak').textContent = `${bestStreak > 0 ? bestStreak + 1 : 0} seguidos`;
+            
+            const heroWidget = document.getElementById('hero-widget'); document.getElementById('hero-days').textContent = daysSinceLast; if (daysSinceLast > 30) heroWidget.classList.add('status-danger');
+            
+            // --- Renderizado del Historial Detallado ---
+            const historyList = document.getElementById('training-history-list'); historyList.innerHTML = ''; sortedTrainings.forEach((date, index) => {
+                const li = document.createElement('li'); li.className = 'list-group-item';
+                const timeAgoText = formatTimeAgo(getDifferenceInDays(date, now));
+                let badgeHTML; if (index === sortedTrainings.length - 1) { badgeHTML = `<span class="badge bg-dark rounded-pill"><i class="bi bi-flag-fill me-1"></i>Primer registro</span>`; } else { badgeHTML = `<span class="badge bg-secondary rounded-pill"><i class="bi bi-hourglass-split me-1"></i>Pasaron ${formatTimeDifference(getDifferenceInDays(sortedTrainings[index + 1], date))}</span>`; }
+                li.innerHTML = `<div class="d-flex justify-content-between align-items-center flex-wrap"><div><div class="fw-bold">${date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</div><small class="text-muted">${date.toLocaleDateString('es-ES', { weekday: 'long' })} &middot; ${timeAgoText}</small></div><div class="mt-2 mt-sm-0">${badgeHTML}</div></div>`; historyList.appendChild(li);
+            });
+            
+            // =================================================================
+            // CAMBIO: Configuración del gráfico de Línea de Tiempo (Scatter)
+            // =================================================================
+            
+            // 1. Preparar datos para el gráfico de dispersión
+            const timelineChartData = sortedTrainings.map(date => {
+                // Cada punto es [timestamp, valor_en_y]
+                // Usamos un valor Y constante para que todos los puntos estén en la misma línea
+                return [date.getTime(), 1]; 
+            }).reverse(); // Revertir para que se muestre en orden cronológico
+
+            // 2. Opciones de configuración del gráfico
+            const timelineOptions = {
+                series: [{ 
+                    name: 'Entrenamiento', 
+                    data: timelineChartData 
+                }],
+                chart: { 
+                    type: 'scatter', // Tipo de gráfico: dispersión
+                    height: 350, 
+                    zoom: { enabled: true, type: 'x' }, 
+                    toolbar: { show: true, tools: { download: false, pan: true, reset: true } }, 
+                    fontFamily: 'Roboto, sans-serif' 
+                },
+                xaxis: { 
+                    type: 'datetime', 
+                    labels: { datetimeUTC: false, format: 'dd MMM yyyy' }, 
+                    title: { text: 'Fecha', style: { fontFamily: 'Oswald, sans-serif' } } 
+                },
+                yaxis: { 
+                    // Ocultamos el eje Y porque no tiene un valor real, solo es para posicionar
+                    labels: { show: false },
+                    axisTicks: { show: false },
+                    axisBorder: { show: false }
+                },
+                tooltip: { 
+                    // Tooltip personalizado para mostrar solo la fecha y hora
+                    x: { format: 'dddd, dd MMM yyyy - HH:mm' },
+                    y: {
+                        formatter: () => 'Actividad registrada',
+                        title: {
+                            formatter: () => '',
+                        },
+                    },
+                },
+                markers: {
+                    size: 6, // Tamaño de los puntos para que sean visibles
+                    hover: { sizeOffset: 3 }
+                },
+                grid: {
+                    show: true,
+                    yaxis: { lines: { show: false } }, // Ocultar líneas de la cuadrícula horizontal
+                }
+            };
+
+            // 3. Renderizar el gráfico
+            new ApexCharts(document.querySelector("#timeline-chart-apex"), timelineOptions).render();
+        });
+    </script>
+</body>
+</html>
